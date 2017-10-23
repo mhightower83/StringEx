@@ -1,0 +1,19 @@
+{
+  "name": "StringEx",
+  "version": "0.12.0",
+  "keywords": "StringEx",
+  "description": "An Extention to the Arduino String Class. Adds method to apply commas to numbers. Adds fixed formating with width specification. Adds insert and append methods. Alters method returns to allow cascaded calling.",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/mhightower83/StringEx.git"
+  },
+  "authors": [
+    {
+      "name": "M Hightower",
+      "email": "mhightow42@gmail.com"
+    }
+  ],
+  "frameworks": "arduino",
+  "platforms": "espressif8266"
+}
