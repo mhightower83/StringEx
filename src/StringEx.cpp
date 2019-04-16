@@ -18,7 +18,6 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
-
 #include <StringEx.h>
 
 StringEx & StringEx::insert(unsigned int pos, const String & str, unsigned int subpos, unsigned int sublen) {
@@ -55,7 +54,7 @@ StringEx & StringEx::insert(unsigned int pos, const String & str, unsigned int s
   return *this;
 }
 
-StringEx & StringEx::width(int n) {
+StringEx & StringEx::width(int n, char pad) {
   if (len >= static_cast<unsigned int>(abs(n)) )
     return *this;
 
@@ -63,9 +62,9 @@ StringEx & StringEx::width(int n) {
     return *this;
 
   if (n >= 0)
-    insert(0, static_cast<unsigned int>(n) - len, ' ');
+    insert(0, static_cast<unsigned int>(n) - len, pad);
   else
-    insert(UINT_MAX, static_cast<unsigned int>(-n) - len, ' ');
+    insert(UINT_MAX, static_cast<unsigned int>(-n) - len, pad);
 
   return *this;
 }
@@ -109,7 +108,68 @@ unsigned int StringEx::numHexDigits(unsigned int pos) {
   return i;
 }
 
-StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos) {
+#if 0
+// ToDo - StringEx & StringEx::commas(int fieldWidth) {}
+StringEx & StringEx::commas(int fieldWidth) {
+  int adjust;
+
+  if ('-' == buf[0])
+    adjust=1;
+  else
+    adjust=0;
+
+  if(len <= 3)
+    return *this;
+
+  size_t charCount = len - adjust;
+  size_t commaCount = (charCount - 1) / 3;
+  size_t index = charCount - commaCount * 3 + adjust; //Where the 1st comma goes
+
+  unsigned newSize = commaCount + charCount + adjust;
+
+  if (newSize > (unsigned)abs(fieldWidth)) {
+    if (_rigidWidth) {
+      if (len <= (unsigned)abs(fieldWidth)) {
+        // It will fit w/o the commas. Lose the commas.
+        commaCount = 0;
+        index = len;
+      } else {
+        // Value will not fit. Fill field with stars
+        len = 0;
+        insert(0, (unsigned)abs(fieldWidth), '*');
+        return *this;
+      }
+    } else {
+      if (0 <= fieldWidth)
+        fieldWidth = newSize;
+      else
+        fieldWidth = -newSize;
+    }
+  }
+
+  len=0;
+  reserve((unsigned)abs(fieldWidth));
+  len=newSize;
+  if (newSize < (unsigned)abs(fieldWidth) && 0 < fieldWidth) // Right justify on possitive
+    insert(0, ((unsigned)abs(fieldWidth) - newSize), ' ');
+
+  size_t i, j, k, offset;
+  offset  = (0 <= fieldWidth) ? static_cast<size_t>(fieldWidth) - newSize : 0;
+  k = (unsigned)abs(fieldWidth) - newSize;
+  for (i=j=0; j <= commaCount; j++, index += 3) {
+    for (; i < index; i++)
+      buffer[offset + i + j] = buffer[i + k];
+
+    if (j < commaCount)
+      buffer[offset + i + j] = ',';
+  }
+
+  return *this;
+}
+#endif
+
+StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos,
+                            char separator, size_t groupsize) {
   int adjust;
 
   if ('-' == strValue.c_str()[0])
@@ -121,8 +181,8 @@ StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos) {
     pos = len;
 
   size_t charCount = strValue.length() - adjust;
-  size_t commaCount = (charCount - 1) / 3;
-  size_t index = charCount - commaCount * 3 + adjust; //Where the 1st comma goes
+  size_t commaCount = (charCount - 1) / groupsize;
+  size_t index = charCount - commaCount * groupsize + adjust; //Where the 1st comma goes
 
   unsigned newSize = commaCount + charCount + adjust;
 
@@ -164,12 +224,12 @@ StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos) {
   offset  = (0 <= fieldWidth) ? static_cast<size_t>(fieldWidth) - newSize : 0;
   offset += (0 <= pos)        ? static_cast<size_t>(pos)                  : 0;
 
-  for (i=j=0; j <= commaCount; j++, index += 3) {
+  for (i=j=0; j <= commaCount; j++, index += groupsize) {
     for (; i < index; i++)
       buffer[offset + i + j] = strValue.c_str()[i];
 
     if (j < commaCount)
-      buffer[offset + i + j] = ',';
+      buffer[offset + i + j] = separator;
   }
 
   if (0 > pos) {

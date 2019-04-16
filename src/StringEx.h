@@ -54,7 +54,7 @@
 #include <limits.h>   // This has the ..._MAX defines
 #include <WString.h>
 
-class StringEx : public String //public StringSumHelper,
+class StringEx : public String //public StringSumHelper
 {
   protected:
 //  unsigned char concat(const char *cstr, unsigned int length) { return String::concat(cstr, length); }
@@ -72,7 +72,7 @@ class StringEx : public String //public StringSumHelper,
     StringEx(const char *cstr) : String::String(cstr), _fail(0), _level(0), _rigidWidth(0) {}
     StringEx(nullptr_t np=nullptr) : String::String((const char *)0), _fail(0), _level(0), _rigidWidth(0) {(void) np;}
     StringEx(const __FlashStringHelper *pstr) : String::String(pstr), _fail(0), _level(0), _rigidWidth(0) {}
-/*
+#if 1
     StringEx(char c) : String::String(c), _fail(0), _level(0), _rigidWidth(0) {}
     StringEx(unsigned char uc, unsigned char base = 10) : String::String(uc, base), _fail(0), _level(0), _rigidWidth(0) {}
     StringEx(int i, unsigned char base = 10) : String::String(i, base), _fail(0), _level(0), _rigidWidth(0) {}
@@ -81,7 +81,7 @@ class StringEx : public String //public StringSumHelper,
     StringEx(unsigned long ul, unsigned char base = 10) : String::String(ul, base), _fail(0), _level(0), _rigidWidth(0) {}
     StringEx(float f, unsigned char decimalPlaces = 2) : String::String(f, decimalPlaces), _fail(0), _level(0), _rigidWidth(0) {}
     StringEx(double d, unsigned char decimalPlaces = 2) : String::String(d, decimalPlaces), _fail(0), _level(0), _rigidWidth(0) {}
-*/
+#endif
 
 
     StringEx & operator = (const String &rhs);
@@ -93,8 +93,8 @@ class StringEx : public String //public StringSumHelper,
     unsigned int numHexDigits(unsigned int pos=0);
     unsigned long hexToUL(unsigned int pos, unsigned int length, unsigned int *numDigitsProcessed=nullptr);
     unsigned long long hexToULL(unsigned int pos, unsigned int length, unsigned int *numDigitsProcessed=nullptr);
-    StringEx & commas(const String & strValue, int fieldWidth=0, int pos=INT_MAX);
-    StringEx & width(int n);
+    StringEx & commas(const String & strValue, int fieldWidth=0, int pos=INT_MAX, char separator=',', size_t groupsize=3);
+    StringEx & width(int n, char pad=' ');
     StringEx & rigidWidth(unsigned int b=true) { _rigidWidth=b; return *this;}
 
     // These calls are modeled after C++ string class
