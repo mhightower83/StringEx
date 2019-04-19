@@ -26,8 +26,8 @@ StringEx & StringEx::insert(unsigned int pos, const String & str, unsigned int s
     return *this;
   }
 
-  if (len < pos)
-    pos = len;
+  if (length() < pos)
+    pos = length();
 
   if (str.length() == 0)
     return *this;
@@ -41,30 +41,31 @@ StringEx & StringEx::insert(unsigned int pos, const String & str, unsigned int s
   if (sublen == 0)
     return *this;
 
-  unsigned int newlen = len + sublen;
+  unsigned int newlen = length() + sublen;
   if (!reserve(newlen)) {
     _fail = 1;
     return *this;
   }
 
-  if (len - pos)
-    memmove(buffer + pos + sublen, buffer + pos, len - pos);
-  strncpy(buffer + pos, str.c_str() + subpos, sublen);
-  len = newlen;
+  if (length() - pos)
+    memmove(wbuffer() + pos + sublen, buffer() + pos, length() - pos);
+  strncpy(wbuffer() + pos, str.c_str() + subpos, sublen);
+  wbuffer()[newlen] = '\0';
+  setLen(newlen);
   return *this;
 }
 
 StringEx & StringEx::width(int n, char pad) {
-  if (len >= static_cast<unsigned int>(abs(n)) )
+  if (length() >= static_cast<unsigned int>(abs(n)) )
     return *this;
 
-  if (abs(n) <= len)
+  if (abs(n) <= length())
     return *this;
 
   if (n >= 0)
-    insert(0, static_cast<unsigned int>(n) - len, pad);
+    insert(0, static_cast<unsigned int>(n) - length(), pad);
   else
-    insert(UINT_MAX, static_cast<unsigned int>(-n) - len, pad);
+    insert(UINT_MAX, static_cast<unsigned int>(-n) - length(), pad);
 
   return *this;
 }
@@ -75,13 +76,13 @@ StringEx & StringEx::insert(unsigned int pos, unsigned int n, char c) {
     return *this;
   }
 
-  if (len < pos)
-    pos = len;
+  if (length() < pos)
+    pos = length();
 
   if (n == 0)
     return *this;
 
-  unsigned int newlen = len + n;
+  unsigned int newlen = length() + n;
   // String class's reserve() method adds 16 bytes and truncates to a
   // multiple of 16. This method always leaves (1 - 16 bytes) room for a '\0',
   // thus no + 1 on newlen for terminating character.
@@ -89,20 +90,21 @@ StringEx & StringEx::insert(unsigned int pos, unsigned int n, char c) {
     _fail = 1;
     return *this;
   }
-  if (len - pos)
-    memmove(buffer + pos + n, buffer + pos, len - pos);
-  memset(buffer + pos, c, n);
-  len = newlen;
+  if (length() - pos)
+    memmove(wbuffer() + pos + n, buffer() + pos, length() - pos);
+  memset(wbuffer() + pos, c, n);
+  wbuffer()[newlen] = '\0';
+  setLen(newlen);
   return *this;
 }
 
 unsigned int StringEx::numHexDigits(unsigned int pos) {
   unsigned int i;
-  if (pos >= len)
+  if (pos >= length())
     return 0;
 
-  for (i=pos; i<len-pos; i++)
-    if (!isHexadecimalDigit(buffer[i]))
+  for (i=pos; i<length()-pos; i++)
+    if (!isHexadecimalDigit(buffer()[i]))
       break;
 
   return i;
@@ -118,10 +120,10 @@ StringEx & StringEx::commas(int fieldWidth) {
   else
     adjust=0;
 
-  if(len <= 3)
+  if(length() <= 3)
     return *this;
 
-  size_t charCount = len - adjust;
+  size_t charCount = length() - adjust;
   size_t commaCount = (charCount - 1) / 3;
   size_t index = charCount - commaCount * 3 + adjust; //Where the 1st comma goes
 
@@ -129,13 +131,13 @@ StringEx & StringEx::commas(int fieldWidth) {
 
   if (newSize > (unsigned)abs(fieldWidth)) {
     if (_rigidWidth) {
-      if (len <= (unsigned)abs(fieldWidth)) {
+      if (length() <= (unsigned)abs(fieldWidth)) {
         // It will fit w/o the commas. Lose the commas.
         commaCount = 0;
-        index = len;
+        index = length();
       } else {
         // Value will not fit. Fill field with stars
-        len = 0;
+        setLen(0);
         insert(0, (unsigned)abs(fieldWidth), '*');
         return *this;
       }
@@ -147,9 +149,9 @@ StringEx & StringEx::commas(int fieldWidth) {
     }
   }
 
-  len=0;
+  setLen(0);
   reserve((unsigned)abs(fieldWidth));
-  len=newSize;
+  setLen(newSize);
   if (newSize < (unsigned)abs(fieldWidth) && 0 < fieldWidth) // Right justify on possitive
     insert(0, ((unsigned)abs(fieldWidth) - newSize), ' ');
 
@@ -158,10 +160,10 @@ StringEx & StringEx::commas(int fieldWidth) {
   k = (unsigned)abs(fieldWidth) - newSize;
   for (i=j=0; j <= commaCount; j++, index += 3) {
     for (; i < index; i++)
-      buffer[offset + i + j] = buffer[i + k];
+      wbuffer()[offset + i + j] = buffer()[i + k];
 
     if (j < commaCount)
-      buffer[offset + i + j] = ',';
+      wbuffer()[offset + i + j] = ',';
   }
 
   return *this;
@@ -177,8 +179,8 @@ StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos,
   else
     adjust=0;
 
-  if (static_cast<unsigned int>(pos) > len)
-    pos = len;
+  if (static_cast<unsigned int>(pos) > length())
+    pos = length();
 
   size_t charCount = strValue.length() - adjust;
   size_t commaCount = (charCount - 1) / groupsize;
@@ -197,7 +199,7 @@ StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos,
         if (0 <= pos) {
           insert(pos, (unsigned)abs(fieldWidth), '*');
         } else {
-          len = 0;
+          setLen(0);
           insert(0, (unsigned)abs(fieldWidth), '*');
         }
         return *this;
@@ -213,9 +215,9 @@ StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos,
   if (0 <= pos) {
     insert(pos, abs(fieldWidth), ' ');
   } else {
-    len=0;
+    //?? what why  setLen(0);
     reserve((unsigned)abs(fieldWidth));
-    len=newSize;
+    setLen(newSize);
     if (newSize < (unsigned)abs(fieldWidth) && 0 < fieldWidth) // Right justify on possitive
       insert(0, ((unsigned)abs(fieldWidth) - newSize), ' ');
   }
@@ -226,10 +228,10 @@ StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos,
 
   for (i=j=0; j <= commaCount; j++, index += groupsize) {
     for (; i < index; i++)
-      buffer[offset + i + j] = strValue.c_str()[i];
+      wbuffer()[offset + i + j] = strValue.c_str()[i];
 
     if (j < commaCount)
-      buffer[offset + i + j] = separator;
+      wbuffer()[offset + i + j] = separator;
   }
 
   if (0 > pos) {
@@ -240,47 +242,47 @@ StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos,
   return *this;
 }
 
-unsigned long StringEx::hexToUL(unsigned int pos, unsigned int length, unsigned int *numDigitsProcessed) {
+unsigned long StringEx::hexToUL(unsigned int pos, unsigned int aLength, unsigned int *numDigitsProcessed) {
   unsigned long value;
   char tmp;
   char *pNewPos;
-  char *pPos = &buffer[pos];
+  const char *pPos = &buffer()[pos];
 
   if (numDigitsProcessed)
     *numDigitsProcessed = 0;
 
-  if (length == 0 || pos >= len)
+  if (aLength == 0 || pos >= length())
     return 0;
 
-  if (length > len)
-    length = len;
+  if (aLength > length())
+    aLength = length();
 
-  if (length > sizeof(unsigned long)*2)
+  if (aLength > sizeof(unsigned long)*2)
     return 0;
 
-  tmp = buffer[pos + length];
-  buffer[pos + length] = '\0';
+  tmp = buffer()[pos + aLength];
+  wbuffer()[pos + aLength] = '\0';
   value = strtoul(pPos, &pNewPos, 16);
-  buffer[pos + length] = tmp;
+  wbuffer()[pos + aLength] = tmp;
 
   if (numDigitsProcessed)
     *numDigitsProcessed = (unsigned int)(pNewPos - pPos);
   return value;
 }
 
-unsigned long long StringEx::hexToULL(unsigned int pos, unsigned int length, unsigned int *numDigitsProcessed) {
+unsigned long long StringEx::hexToULL(unsigned int pos, unsigned int aLength, unsigned int *numDigitsProcessed) {
   if (numDigitsProcessed)
     *numDigitsProcessed = 0;
 
-  if (length == 0 || pos >= len)
+  if (aLength == 0 || pos >= length())
     return 0;
 
-  if (length > len)
-    length = len;
+  if (aLength > length())
+    aLength = length();
 
   unsigned int hexCount = numHexDigits(pos);
-  if (hexCount > length)
-    hexCount = length;
+  if (hexCount > aLength)
+    hexCount = aLength;
 
   if (hexCount > sizeof(unsigned long)*4)
     return 0;
@@ -303,8 +305,8 @@ StringEx & StringEx::operator = (const StringEx &rhs) {
     if(this == &rhs)
         return *this;
 
-    if(rhs.buffer)
-        copy(rhs.buffer, rhs.len);
+    if(rhs.buffer())
+        copy(rhs.wbuffer(), rhs.length());
     else
         invalidate();
 
