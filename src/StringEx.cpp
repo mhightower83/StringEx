@@ -98,6 +98,15 @@ StringEx & StringEx::insert(unsigned int pos, unsigned int n, char c) {
   return *this;
 }
 
+StringEx & StringEx::insertDec(const unsigned int pos, const char sep) {
+  unsigned len = length();
+  if (pos > len) {
+    insert(0, pos - len, '0');
+    len = length();
+  }
+  return insert(len - pos, 1, sep);
+}
+
 unsigned int StringEx::numHexDigits(unsigned int pos) {
   unsigned int i;
   if (pos >= length())
@@ -171,22 +180,32 @@ StringEx & StringEx::commas(int fieldWidth) {
 #endif
 
 StringEx & StringEx::commas(const String & strValue, int fieldWidth, int pos,
-                            char separator, size_t groupsize) {
-  int adjust;
+        char separator, size_t groupsize, int dec, const char decChar) {
 
+  int adjust = 0;
   if ('-' == strValue.c_str()[0])
-    adjust=1;
-  else
-    adjust=0;
+    adjust = 1;
 
   if (static_cast<unsigned int>(pos) > length())
     pos = length();
-
+#if 1
   size_t charCount = strValue.length() - adjust;
   size_t commaCount = (charCount - 1) / groupsize;
   size_t index = charCount - commaCount * groupsize + adjust; //Where the 1st comma goes
 
-  unsigned newSize = commaCount + charCount + adjust;
+  unsigned newSize = commaCount + charCount + adjust + ((dec >= 0)? 1 : 0);
+
+#else
+  int decAdjustCount = (dec >= 0)? abs(dec) + 1 : 0;
+  size_t charCount = strValue.length() - adjust - decAdjustCount;
+  size_t commaCount = (charCount - 1) / groupsize;
+  size_t index = charCount - commaCount * groupsize + adjust + decAdjustCount; //Where the 1st comma goes
+
+  unsigned newSize = commaCount + charCount + adjust + decAdjustCount;
+#endif
+
+
+
 
   if (newSize > (unsigned)abs(fieldWidth)) {
     if (_rigidWidth) {

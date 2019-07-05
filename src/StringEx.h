@@ -93,7 +93,11 @@ class StringEx : public String //public StringSumHelper
     unsigned int numHexDigits(unsigned int pos=0);
     unsigned long hexToUL(unsigned int pos, unsigned int length, unsigned int *numDigitsProcessed=nullptr);
     unsigned long long hexToULL(unsigned int pos, unsigned int length, unsigned int *numDigitsProcessed=nullptr);
-    StringEx & commas(const String & strValue, int fieldWidth=0, int pos=INT_MAX, char separator=',', size_t groupsize=3);
+    StringEx & commas(const String & strValue, int fieldWidth=0, int pos=INT_MAX, char separator=',', size_t groupsize=3, int dec=-1, const char decChar='.');
+    StringEx & commasDec(const String & strValue, int dec, int fieldWidth=0, int pos=INT_MAX, char separator=',', size_t groupsize=3, const char decChar='.') {
+      commas(strValue, fieldWidth, pos, separator, groupsize, dec, decChar);
+      return *this;
+    }
     StringEx & width(int n, char pad=' ');
     StringEx & rigidWidth(unsigned int b=true) { _rigidWidth=b; return *this;}
 
@@ -104,6 +108,7 @@ class StringEx : public String //public StringSumHelper
     StringEx & insert(unsigned int pos, const char *cstr)  {return insert(pos, cstr, 0, UINT_MAX); }
     StringEx & insert(unsigned int pos, const __FlashStringHelper *pstr)  {return insert(pos, pstr, 0, UINT_MAX); }
     StringEx & insert(unsigned int pos, unsigned int n, char c);
+    StringEx & insertDec(const unsigned int pos, const char sep='.');
     StringEx & append(const String & str, unsigned int subpos=0, unsigned int sublen=UINT_MAX) {return insert(UINT_MAX, str, subpos, sublen); }
     StringEx & append(const char *cstr, unsigned int clen) {return insert(UINT_MAX, cstr, 0, clen); }
     StringEx & append(const __FlashStringHelper *pstr, unsigned int clen) {return insert(UINT_MAX, pstr, 0, clen); }
